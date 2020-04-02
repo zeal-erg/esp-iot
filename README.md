@@ -24,6 +24,7 @@ esp32 sdk目录
 
 项目文件目录树
 
+```reStructuredText
 project
 └── iot_esp32
     ├── build_app.sh
@@ -34,6 +35,7 @@ project
     ├── main
     │   └── main
     └── Makefile
+```
 
 ### iot_esp32
 
