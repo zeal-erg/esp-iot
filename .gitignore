@@ -50,3 +50,13 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# build file
+build/
+out
+
+# toolchain
+xtensa-esp32-elf/
+esp-idf/
+
+
