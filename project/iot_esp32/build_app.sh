@@ -47,7 +47,7 @@ echo "APP_NAME=$APP_BIN_NAME"
 echo "APP_VERSION=$USER_SW_VER"
 
 echo ""
-echo "start..."
+echo "iot_esp32 compile start..."
 echo ""
 set -e
 
@@ -61,38 +61,49 @@ if [ -d "./build/iot"  ]; then
 	rm -r ./build/iot
 fi
 
-make_bin()
+iot_esp32_combia_bin()
+{
+        PARTITION_BIN_NAME=partitions_singleapp
+        python $TOP_DIR/tools/filepack/bin_combia.py \
+                ./build/bootloader/bootloader.bin \
+                ./build/$PARTITION_BIN_NAME.bin \
+                ./build/$PRJ_NAME.bin \
+                ./build/$APP_BIN_NAME"_"$USER_SW_VER.bin
+}
+
+iot_esp32_make_bin()
 {
         make -j4 APP_BIN_NAME=$APP_BIN_NAME USER_SW_VER=$USER_SW_VER $1
         echo ""
         if [ "clean" != "$1" ];then
                 if [ ! -d "$OUTPUT_PATH/$USER_SW_VER" ]; then
-						echo "arrived"
                         mkdir -p $OUTPUT_PATH/$USER_SW_VER
                 fi
+                iot_esp32_combia_bin
         fi
 }
 
 if [ "all" = "$3" ]; then
-        echo "***build and flash all bin***"
-        make_bin
+        echo "****** iot_esp32 build and flash all bin ******"
+        iot_esp32_make_bin
         ./flash_bin.sh all
 
 elif [ "user1" = "$3" ]; then
-        echo "***build and flash user1 bin***"
-        make_bin 
+        echo "****** iot_esp32 build and flash user1 bin ******"
+        iot_esp32_make_bin
         ./flash_bin.sh user1
 
 else
-        echo "***only build project***"
-        make_bin $3
+        echo "****** iot_esp32 only build project ******"
+        iot_esp32_make_bin $3
 fi
 
+
 if [ $? -ne 0 ]; then
-    echo "build_app.sh failed"
+    echo "****** iot_esp32 build_app.sh failed ******"
     exit 1
 else
-    echo "build_app.sh succeed"
+    echo "****** iot_esp32 build_app.sh succeed ******"
 fi
 
 echo '      ___           ___                        ___                                               ___                   '

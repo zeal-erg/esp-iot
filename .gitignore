@@ -59,4 +59,6 @@ out
 xtensa-esp32-elf/
 esp-idf/
 
-
+.vscode/
+sdkconfig
+esp-idf/

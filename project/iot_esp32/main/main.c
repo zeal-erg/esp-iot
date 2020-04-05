@@ -15,8 +15,78 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "sdkconfig.h"
+#include "elog.h"
 
+/**
+ * @brief iot_app_init_thread
+ * 
+ * @param param 
+ */
+static void iot_app_init_thread(void *param)
+{
+    extern void iot_user_main(void); 
+    iot_user_main();
+
+    /* Kill init thread after all init tasks done */
+    vTaskDelete(NULL);
+}
+
+/**
+ * @brief iot_app_init_entry
+ * 
+ */
+void iot_app_init_entry(void)
+{
+    if(xTaskCreate(iot_app_init_thread,"iot_app_init", 4096, NULL, tskIDLE_PRIORITY + 3, NULL) != pdPASS)
+        printf("\n\r%s xTaskCreate(iot_app_init_thread) failed", __FUNCTION__);
+}
+
+/**
+ * @brief elog_user_assert_hook
+ * 
+ * @param ex 
+ * @param func 
+ * @param line 
+ */
+static void elog_user_assert_hook(const char* ex, const char* func, size_t line) {
+#ifdef ELOG_ASYNC_OUTPUT_ENABLE
+    /* disable async output */
+    elog_async_enabled(false);
+#endif
+
+    /* disable logger output lock */
+    elog_output_lock_enabled(false);
+    /* disable flash plugin lock */
+    // elog_flash_lock_enabled(false);
+    /* output logger assert information */
+    elog_a("elog", "(%s) has assert failed at %s:%ld.\n", ex, func, line);
+    /* write all buffered log to flash */
+    // elog_flash_flush();
+    while (1);
+}
+
+/**
+ * @brief 
+ * 
+ */
 void app_main(void) {
+    /* easylogger init */
+    if (elog_init() == ELOG_NO_ERR) {
+        /* set enabled format */
+        elog_set_fmt(ELOG_LVL_ASSERT, ELOG_FMT_ALL & ~ELOG_FMT_P_INFO);
+        elog_set_fmt(ELOG_LVL_ERROR, ELOG_FMT_LVL | ELOG_FMT_TAG | ELOG_FMT_TIME);
+        elog_set_fmt(ELOG_LVL_WARN, ELOG_FMT_LVL | ELOG_FMT_TAG | ELOG_FMT_TIME);
+        elog_set_fmt(ELOG_LVL_INFO, ELOG_FMT_LVL | ELOG_FMT_TAG | ELOG_FMT_TIME);
+        elog_set_fmt(ELOG_LVL_DEBUG, ELOG_FMT_ALL & ~(ELOG_FMT_FUNC | ELOG_FMT_P_INFO));
+        elog_set_fmt(ELOG_LVL_VERBOSE, ELOG_FMT_ALL & ~(ELOG_FMT_FUNC | ELOG_FMT_P_INFO));
+        /* set EasyLogger assert hook */
+        elog_assert_set_hook(elog_user_assert_hook);
+        /* initialize EasyLogger Flash plugin */
+        // elog_flash_init();
+        /* start EasyLogger */
+        elog_start();
+    }
+
     printf("Hello world!\n");
 
     /* Print chip information */
@@ -40,6 +110,8 @@ void app_main(void) {
         printf("Restarting in %d seconds...\n", i);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
+    iot_app_init_entry();
+
     printf("Restarting now.\n");
     fflush(stdout);
     esp_restart();
