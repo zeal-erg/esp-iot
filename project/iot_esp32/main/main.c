@@ -17,6 +17,8 @@
 #include "sdkconfig.h"
 #include "elog.h"
 
+#include "esp_log.h"
+
 /**
  * @brief iot_app_init_thread
  * 
@@ -70,6 +72,7 @@ static void elog_user_assert_hook(const char* ex, const char* func, size_t line)
  * 
  */
 void app_main(void) {
+    #if 1
     /* easylogger init */
     if (elog_init() == ELOG_NO_ERR) {
         /* set enabled format */
@@ -86,7 +89,7 @@ void app_main(void) {
         /* start EasyLogger */
         elog_start();
     }
-
+    #endif
     printf("Hello world!\n");
 
     /* Print chip information */
@@ -106,13 +109,10 @@ void app_main(void) {
 
     printf("Free heap: %d\n", esp_get_free_heap_size());
 
-    for (int i = 10; i >= 0; i--) {
-        printf("Restarting in %d seconds...\n", i);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
+    ESP_LOGE("iot-esp", "iot_app_init_entry");
     iot_app_init_entry();
 
-    printf("Restarting now.\n");
-    fflush(stdout);
-    esp_restart();
+    // printf("Restarting now.\n");
+    // fflush(stdout);
+    //esp_restart();
 }

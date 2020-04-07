@@ -33,7 +33,11 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 
+#ifdef ELOG_ASYNC_OUTPUT_ENABLE
+static SemaphoreHandle_t xSemaphore_port_notice = NULL;
+
 static void async_output(void *arg);
+#endif
 
 SemaphoreHandle_t xSemaphore_port = NULL;
 TaskHandle_t xHandle_port = NULL;
@@ -45,15 +49,18 @@ TaskHandle_t xHandle_port = NULL;
  */
 ElogErrCode elog_port_init(void) {
     ElogErrCode result = ELOG_NO_ERR;
-
-    /* add your code here */
-#ifdef ELOG_ASYNC_OUTPUT_ENABLE
-    xSemaphore_port = xSemaphoreCreateCounting(1, 0);
+    xSemaphore_port = xSemaphoreCreateCounting(1, 1);
     if (xSemaphore_port == NULL) {
         return ELOG_SEM_CREATE_FAIL;
     }
+    /* add your code here */
+#ifdef ELOG_ASYNC_OUTPUT_ENABLE
+    xSemaphore_port_notice = xSemaphoreCreateCounting(1, 0);
+    if (xSemaphore_port_notice == NULL) {
+        return ELOG_SEM_CREATE_FAIL;
+    }
 
-    BaseType_t ret = xTaskCreate(async_output, "log_output", 1024, NULL, 6, &xHandle_port);
+    BaseType_t ret = xTaskCreate(async_output, "log_output", 4096, NULL, 6, &xHandle_port);
     if (ret != pdPASS) {
         return ELOG_TASK_CREATE_FAIL;
     }
@@ -123,12 +130,12 @@ const char *elog_port_get_p_info(void) {
 const char *elog_port_get_t_info(void) {
     
     /* add your code here */
-    return "";
+    return "iot_esp";
 }
 
 #ifdef ELOG_ASYNC_OUTPUT_ENABLE
 void elog_async_output_notice(void) {
-    xSemaphoreGive(xSemaphore_port);
+    xSemaphoreGive(xSemaphore_port_notice);
 }
 
 static void async_output(void *arg) {
@@ -137,7 +144,7 @@ static void async_output(void *arg) {
 
     while (true) {
         /* waiting log */
-        xSemaphoreTake(xSemaphore_port, 0xFFFFFFFF);
+        xSemaphoreTake(xSemaphore_port_notice, 0xFFFFFFFF);
         /* polling gets and outputs the log */
         while (true) {
 #ifdef ELOG_ASYNC_LINE_OUTPUT

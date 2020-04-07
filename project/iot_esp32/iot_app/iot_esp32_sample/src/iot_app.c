@@ -23,5 +23,6 @@
  */
 void iot_user_main(void)
 {
-    printf("iot_esp %s_%s\r\n",APP_BIN_NAME, USER_SW_VER);
+    printf("iot_esp %s_V%s\r\n",APP_BIN_NAME, USER_SW_VER);
+    printf("iot_esp compiled at %s %s\r\n", __DATE__, __TIME__);
 }
